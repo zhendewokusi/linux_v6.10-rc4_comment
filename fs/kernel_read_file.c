@@ -41,33 +41,33 @@ ssize_t kernel_read_file(struct file *file, loff_t offset, void **buf,
 	void *allocated = NULL;
 	bool whole_file;
 	int ret;
-
+	/*判断参数是否合法*/
 	if (offset != 0 && (!*buf || !file_size))
 		return -EINVAL;
-
+	/*判断文件格式是否合法*/
 	if (!S_ISREG(file_inode(file)->i_mode))
 		return -EINVAL;
-
+	/*防止其他进程修改*/
 	ret = deny_write_access(file);
 	if (ret)
 		return ret;
-
+	/*读取 file 大小*/
 	i_size = i_size_read(file_inode(file));
 	if (i_size <= 0) {
 		ret = -EINVAL;
 		goto out;
 	}
-	/* The file is too big for sane activities. */
+	/* 文件大小异常大处理 */
 	if (i_size > SSIZE_MAX) {
 		ret = -EFBIG;
 		goto out;
 	}
-	/* The entire file cannot be read in one buffer. */
+	/* 整个文件超过 buff 最大大小 */
 	if (!file_size && offset == 0 && i_size > buf_size) {
 		ret = -EFBIG;
 		goto out;
 	}
-
+	
 	whole_file = (offset == 0 && i_size <= buf_size);
 	ret = security_kernel_read_file(file, id, whole_file);
 	if (ret)

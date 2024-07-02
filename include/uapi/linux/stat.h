@@ -18,9 +18,12 @@
 #define S_ISGID  0002000
 #define S_ISVTX  0001000
 
+/*判断文件是否是符号链接*/
 #define S_ISLNK(m)	(((m) & S_IFMT) == S_IFLNK)
+/*判断文件是否是常规文件*/
 #define S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)
 #define S_ISDIR(m)	(((m) & S_IFMT) == S_IFDIR)
+/*判断文件是否是字符设备*/
 #define S_ISCHR(m)	(((m) & S_IFMT) == S_IFCHR)
 #define S_ISBLK(m)	(((m) & S_IFMT) == S_IFBLK)
 #define S_ISFIFO(m)	(((m) & S_IFMT) == S_IFIFO)

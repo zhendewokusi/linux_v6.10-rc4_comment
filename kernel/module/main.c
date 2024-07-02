@@ -3150,7 +3150,7 @@ static int init_module_from_file(struct file *f, const char __user * uargs, int 
 	struct load_info info = { };
 	void *buf = NULL;
 	int len;
-
+	/*从磁盘中获取文件，并处理传入的是压缩文件的情况（使用modprobe实际上传入的是 *.ko.zst）*/
 	len = kernel_read_file(f, 0, &buf, INT_MAX, NULL, READING_MODULE);
 	if (len < 0) {
 		mod_stat_inc(&failed_kreads);
@@ -3173,20 +3173,23 @@ static int init_module_from_file(struct file *f, const char __user * uargs, int 
 	return load_module(&info, uargs, flags);
 }
 
+/*	函数作用：幂等操作接口
+	第一个参数是要加载模块的文件（是压缩格式）
+	第二个参数是添加模块的输入的命令的参数	*/
 static int idempotent_init_module(struct file *f, const char __user * uargs, int flags)
 {
 	struct idempotent idem;
-
+	/* 检查文件是否存在，是否有权限读取该文件*/
 	if (!f || !(f->f_mode & FMODE_READ))
 		return -EBADF;
 
-	/* See if somebody else is doing the operation? */
+	/* 查看有没有其他进程在做这个操作 */
 	if (idempotent(&idem, file_inode(f))) {
 		wait_for_completion(&idem.complete);
 		return idem.ret;
 	}
 
-	/* Otherwise, we'll do it and complete others */
+	/* 如果没有其他进程正在添加模块，则自己添加 */
 	return idempotent_complete(&idem,
 		init_module_from_file(f, uargs, flags));
 }
